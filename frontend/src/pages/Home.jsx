@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../App.css'
+// import { measureDownloadSpeed, measureLatency, measureUploadSpeed } from '../ClientSpeedTest.js';
+
 export default function Home() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -21,23 +23,48 @@ export default function Home() {
   };
 
   const runSpeedTest = async () => {
-     setLoading(true);
-  try {
+    setLoading(true);
     // Check for logged-in user (adjust this logic as needed)
+   
+        try {
+          
+          // Send latitude and longitude to backend with the speed test result
+          // const latency = await measureLatency();
+          // const downloadSpeed = await measureDownloadSpeed();
+          // const uploadSpeed = await measureUploadSpeed();
 
-    const response = await fetch('/api/speedtest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username || 'guest' }),
-    });
-    const data = await response.json();
-    setResults(data.result);
-    localStorage.setItem('speedtestResults', JSON.stringify(data.result));
-  } catch (error) {
-    console.error('Error fetching speed test results:', error);
-  } finally {
-    setLoading(false);
-  }
+          const TEST = {
+            username: username || 'guest',
+            // download: downloadSpeed,
+            // avg_ping: latency,
+            // upload: uploadSpeed,
+           
+          };
+
+        const response = await fetch('https://700-digital-equity-production-c1d4.up.railway.app/api/speedtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(TEST)
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.result) {
+          setResults(data.result); // Use the server's result object
+        } else {
+          throw new Error(data.message || 'Unknown error from server');
+        }
+
+
+          setResults(data.result)
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching speed test results:', error);
+        } finally {
+          setLoading(false);
+        }
+      
+     
   };
     return (
 

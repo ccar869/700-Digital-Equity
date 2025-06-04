@@ -1,10 +1,12 @@
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, make_response, Response
 from flask_cors import CORS
 import test
 import os
 from pymongo import MongoClient
+from datetime import datetime,timezone
+
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 client = MongoClient('mongodb+srv://rebeccafitzpatrick:hfJ|m#gv5W55@cluster0.pvplf8n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
 db = client['700_web_tool_db']
@@ -34,6 +36,7 @@ def speedtest():
 def user_speedtest():
     data = request.json
     username = data.get('username')
+    packet_loss = "0"
     if not username:
         return jsonify({'success': False, 'message': 'Username required'}), 400
 
@@ -46,7 +49,9 @@ def user_speedtest():
         'download': download,
         'upload': upload,
         'packet_loss': packet_loss,
-        'avg_ping': avg_ping
+        'avg_ping': avg_ping,
+        'timestamp': datetime.now(timezone.utc)
+
     }
     leaderboard_collection.insert_one(speedtest_record)
     speedtest_record.pop('_id', None)  # Remove MongoDB's _id field for the response
@@ -55,7 +60,6 @@ def user_speedtest():
 
 @app.route('/api/leaderboard', methods=['GET'])
 def leaderboard():
-    # Replace this with actual database query
     data = list(leaderboard_collection.find({}, {'_id': 0}))  # Exclude MongoDB's _id field
     return jsonify(data)
 
@@ -74,9 +78,42 @@ def login():
     else:
         return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
+@app.route('/garbage.php', methods=['GET', 'HEAD'])
+def download_test():
+    try:
+        size = int(request.args.get('ckSize', 1* 1024 *1024))  # default 10MB
+    except ValueError:
+        return "Invalid size", 400
+
+    if request.method == 'HEAD':
+        # Return headers only (for latency test)
+        response = make_response()
+        response.headers['Content-Type'] = 'application/octet-stream'
+        response.headers['Content-Length'] = str(size)
+        return response
+
+    # Streaming generator to avoid large memory allocation
+    def generate():
+        chunk_size = 8192
+        bytes_sent = 0
+        while bytes_sent < size:
+            yield b'\0' * min(chunk_size, size - bytes_sent)
+            bytes_sent += chunk_size
+
+    headers = {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': str(size),
+    }
+
+    return Response(generate(), headers=headers)
+
+@app.route('/empty.php', methods=['POST'])
+def upload_test():
+    # Data is received but not stored
+    _ = request.get_data()
+    return "OK", 200
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
     app.run()
-    speedtest()
     

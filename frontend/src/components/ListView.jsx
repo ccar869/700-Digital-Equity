@@ -8,7 +8,7 @@ export default function ListView() {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const response = await fetch('/api/leaderboard'); // Replace with your API endpoint
+        const response = await fetch('https://700-digital-equity-production-c1d4.up.railway.app/api/leaderboard'); // Replace with your API endpoint
         const data = await response.json();
         console.log('Fetched leaderboard data:', data); // Debugging line
         setRecords(data);
@@ -35,6 +35,8 @@ export default function ListView() {
         <span>Upload Speed</span>
         <span>Download Speed</span>
         <span>Device</span>
+        <span>Date</span>
+        <span>Location</span>
       </div>
       <ul className="list-view-items">
         {records.map((record, index) => (

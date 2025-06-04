@@ -10,6 +10,12 @@ export default function ListItem({ record }){
         <span>{record.upload} MB/s</span>
         <span>{record.download} MB/s</span>
         <span>{record.device}</span>
+        <span>{record.timestamp ? new Date(record.timestamp).toLocaleString() : ''}</span>
+        <span>
+          {record.location
+            ? `${record.location.latitude}, ${record.location.longitude}`
+            : ''}
+        </span>
       </div>
     </li>
   );

@@ -1,9 +1,10 @@
 import speedtest
-import subprocess
-import re
 import platform
 import psutil
+import subprocess
+import re
 
+from ping3 import ping
 def get_size(bytes, suffix="B"):
     """
     Scale bytes to its proper format
@@ -37,29 +38,24 @@ def speedTest():
     print('Download speed is:', download, 'MB per second')
     print('Upload speed is:', upload, 'MB per second')
 
-    output = ping_host("www.google.com")
+    #output = ping_host("www.google.com")
     # Extract packet loss
 
-    match = re.search(r'(\d+)\s*%', output)
-    packet_loss = int(match.group(1)) if match else None
-
-    # Extract average ping
-    ping_match = re.search(r'time=(\d+(?:\.\d+)?)\s*ms', output)
-
-    if ping_match:
-        ping_str = ping_match.group(1)
-        
-        # Ensure it has exactly 1 decimal place
-        if '.' not in ping_str:
-            ping_time = f"{ping_str}.0"
+    count = 4
+    lost = 0
+    total_ping = 0
+    successful_pings = 0
+    for _ in range(count):
+        result = ping("www.google.com", timeout=2)
+        if result is None:
+            lost += 1
         else:
-            # Optional: ensure only 1 decimal place even if more
-            ping_time = f"{float(ping_str):.1f}"
+            total_ping += result
+            successful_pings += 1
+    packet_loss = (lost / count) * 100
+    ping_time = f"{(total_ping / successful_pings) * 1000:.1f}" if successful_pings > 0 else None
 
-    print(f"Packet Loss: {packet_loss}%")
-    print(f"Average Ping: {ping_time} ms")
-
-    return [download, upload, packet_loss, ping_time]
+    return [download, upload, packet_loss, ping_time]    
 
 def getHardware():
     print("="*40, "System Information", "="*40)

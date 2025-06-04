@@ -1,5 +1,5 @@
 import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {Routes, Route} from 'react-router-dom';
 import Home from './pages/Home';
 import Navbar from './components/Navbar';
 import Comparison from './pages/Comparison';
@@ -10,14 +10,13 @@ function App() {
 
   return (
     <div>
-      <Router>
         <Navbar />
         <Routes>
           <Route path="/comparison" element={<Comparison/>}/>
           <Route path="/login" element={<Login/>}/>
           <Route path="/" element={<Home />} />
         </Routes>
-      </Router>
+
       
     </div>
   );
